@@ -1,10 +1,10 @@
-# µWatt‑Infer SoC
+# Microwatt‑Infer SoC
 
 An open-source SoC for small-scale language model inference on the edge, built around the 64‑bit Microwatt POWER ISA core plus a custom ML accelerator, targeting the SKY130 PDK with a fully open EDA flow.
 
 ## Summary
 
-µWatt‑Infer will be a fully open-source SoC dedicated to efficient, small‑scale language model inference at the edge. A 64‑bit Microwatt core orchestrates the accelerator that targets the compute‑intensive Machine learning operations: matrix multiplication, softmax, and layer normalization.
+Microwatt‑Infer will be a fully open-source SoC dedicated to efficient, small‑scale language model inference at the edge. A 64‑bit Microwatt core orchestrates the accelerator that targets the compute‑intensive Machine learning operations: matrix multiplication, softmax, and layer normalization.
 
 ## Project Description & Goals
 
@@ -20,7 +20,7 @@ The design offloads heavy inference kernels to a dedicated accelerator while Mic
 
 ## Project Motivation
 
-The µWatt‑Infer SoC project aims to make efficient, small‑scale language model inference accessible and reproducible for everyone. By combining a proven open-source Microwatt POWER ISA CPU with a custom accelerator, the design targets the unique challenges of running AI workloads at the edge—where power, area, and cost are tightly constrained.
+The Microwatt‑Infer SoC project aims to make efficient, small‑scale language model inference accessible and reproducible for everyone. By combining a proven open-source Microwatt POWER ISA CPU with a custom accelerator, the design targets the unique challenges of running AI workloads at the edge—where power, area, and cost are tightly constrained.
 
 This project showcases how open hardware can drive innovation in edge AI, foster education, and empower a broader community to explore, prototype, and advance the state of low‑cost, energy‑efficient inference systems.
 
@@ -56,10 +56,6 @@ Components:
 - This repository targets the OpenFrame/Caravel ecosystem and SKY130.  
 - Tooling: GHDL, Yosys, OpenLane, KLayout, Magic.  
 - Reproducible setup and full build instructions will be published as the design lands in `docs/`.
-
-## License
-
-Apache‑2.0. See `LICENSE`.
 
 ## Acknowledgments
 
