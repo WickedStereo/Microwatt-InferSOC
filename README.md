@@ -1,75 +1,66 @@
-# OpenFrame Overview
+# µWatt‑Infer SoC
 
-The OpenFrame Project provides an empty harness chip that differs significantly from the Caravel and Caravan designs. Unlike Caravel and Caravan, which include integrated SoCs and additional features, OpenFrame offers only the essential padframe, providing users with a clean slate for their custom designs.
+An open-source SoC for small-scale language model inference on the edge, built around the 64‑bit Microwatt POWER ISA core plus a custom ML accelerator, targeting the SKY130 PDK with a fully open EDA flow.
 
-<img width="256" alt="Screenshot 2024-06-24 at 12 53 39 PM" src="https://github.com/efabless/openframe_timer_example/assets/67271180/ff58b58b-b9c8-4d5e-b9bc-bf344355fa80">
+## Summary
 
-## Key Characteristics of OpenFrame
+µWatt‑Infer will be a fully open-source SoC dedicated to efficient, small‑scale language model inference at the edge. A 64‑bit Microwatt core orchestrates the accelerator that targets the compute‑intensive Machine learning operations: matrix multiplication, softmax, and layer normalization.
 
-1. **Minimalist Design:** 
-   - No integrated SoC or additional circuitry.
-   - Only includes the padframe, a power-on-reset circuit, and a digital ROM containing the 32-bit project ID.
+## Project Description & Goals
 
-2. **Padframe Compatibility:**
-   - The padframe design and pin placements match those of the Caravel and Caravan chips, ensuring compatibility and ease of transition between designs.
-   - Pin types are identical, with power and ground pins positioned similarly and the same power domains available.
+The design offloads heavy inference kernels to a dedicated accelerator while Microwatt manages control flow, data movement, and I/O. This hybrid CPU/accelerator architecture balances performance with area/power limits on SKY130.
 
-3. **Flexibility:**
-   - Provides full access to all GPIO controls.
-   - Maximizes the user project area, allowing for greater customization and integration of alternative SoCs or user-specific projects at the same hierarchy level.
+### Key Goals
 
-4. **Simplified I/O:**
-   - Pins that previously connected to CPU functions (e.g., flash controller interface, SPI interface, UART) are now repurposed as general-purpose I/O, offering flexibility for various applications.
+- Design a specialized accelerator for Inference workloads (MatMul, Softmax, LayerNorm), leveraging open IP (e.g., systolic arrays) adapted for SKY130.
+- Integrate tightly with Microwatt via a standard Wishbone bus for control and data movement.
+- Use a fully open EDA flow from RTL simulation (GHDL) through synthesis (Yosys) and P&R (OpenLane).
+- Constrain for SKY130 manufacturability with realistic area, timing, and power budgets; produce a fabrication‑viable GDSII.
+- Provide clear documentation: architecture diagrams, verification plan and a reproducibility guide.
 
-The OpenFrame harness is ideal for those looking to implement custom SoCs or integrate user projects without the constraints of an existing SoC.
+## Project Motivation
 
-## Features
+The µWatt‑Infer SoC project aims to make efficient, small‑scale language model inference accessible and reproducible for everyone. By combining a proven open-source Microwatt POWER ISA CPU with a custom accelerator, the design targets the unique challenges of running AI workloads at the edge—where power, area, and cost are tightly constrained.
 
-1. 44 configurable GPIOs.
-2. User area of approximately 15mm².
-3. Supports digital, analog, or mixed-signal designs.
+This project showcases how open hardware can drive innovation in edge AI, foster education, and empower a broader community to explore, prototype, and advance the state of low‑cost, energy‑efficient inference systems.
 
-# openframe_timer_example
+## Technical Deep Dive
 
-This example implements a simple timer and connects it to the GPIOs.
+### System Architecture
 
-## Installation and Setup
+Components:
 
-First, clone the repository:
+- Microwatt CPU core (controller)
+- Inference accelerator: systolic MatMul, vector ALU, and SFU (Softmax/LayerNorm)
+- On‑chip SRAM for weights/activations/code (8–16 KB feasible target on SKY130)
+- Wishbone interconnect (CPU ↔ SRAM ↔ accelerator)
+- UART peripheral for I/O and demo
 
-```bash
-git clone https://github.com/efabless/openframe_timer_example.git
-cd openframe_timer_example
-```
+### Accelerator Design
 
-Then, download all dependencies:
+- Systolic array for MatMul (adapt open designs; right‑size for area).  
+- Vector ALU for element‑wise ops.  
+- Special Function Unit (Softmax/LayerNorm) using LUTs and iterative methods.  
+- Target performance: ~5–10 inferences/sec on a tiny model within SKY130 limits.  
+- Bottlenecks: SRAM capacity and Wishbone latency—mitigated via careful tiling and on‑chip data reuse.
 
-```bash
-make setup
-```
+## Action Plan
 
-## Hardening the Design
+1. Select a reference tiny model (e.g., char‑rnn or micro‑transformer) to drive concrete memory/throughput targets.  
+2. Identify candidate open IP (systolic array, softmax/LN blocks) for adaptation.  
+3. Draft a plan for RTL, verification, firmware, integration, and P&R.  
+4. Stand up CI for simulation and linting; document reproducible build steps.
 
-In this example, we will harden the timer. You will need to harden your own design similarly.
+## Repository & Build Notes
 
-```bash
-make user_proj_timer
-```
+- This repository targets the OpenFrame/Caravel ecosystem and SKY130.  
+- Tooling: GHDL, Yosys, OpenLane, KLayout, Magic.  
+- Reproducible setup and full build instructions will be published as the design lands in `docs/`.
 
-Once you have hardened your design, integrate it into the OpenFrame wrapper:
+## License
 
-```bash
-make openframe_project_wrapper
-```
+Apache‑2.0. See `LICENSE`.
 
-## Important Notes
+## Acknowledgments
 
-1. **Connecting to Power:**
-   - Ensure your design is connected to power using the power pins on the wrapper.
-   - Use the `vccd1_connection` and `vssd1_connection` macros, which contain the necessary vias and nets for power connections.
-
-2. **Flattening the Design:**
-   - If you plan to flatten your design within the `openframe_project_wrapper`, do not buffer the analog pins using standard cells.
-
-3. **Running Custom Steps:**
-   - Execute the custom step in OpenLane that copies the power pins from the template DEF. If this step is skipped, the precheck will fail, and your design will not be powered.
+Microwatt (POWER ISA), OpenLane/OpenROAD, SkyWater SKY130 PDK, and the broader open‑hardware community.
