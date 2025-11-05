@@ -120,7 +120,7 @@ setup: check_dependencies install check-env install_mcw openlane pdk-with-volare
 # Openlane
 blocks=$(shell cd openlane && find * -maxdepth 0 -type d)
 .PHONY: $(blocks)
-$(blocks): % :
+$(blocks): % : microwatt-core-v
 	$(MAKE) -C openlane $*
 
 dv_patterns=$(shell cd verilog/dv && find * -maxdepth 0 -type d)
@@ -149,8 +149,63 @@ docker_run_verify=\
 		-e CORE_VERILOG_PATH=$(TARGET_PATH)/mgmt_core_wrapper/verilog \
 		-e CARAVEL_VERILOG_PATH=$(TARGET_PATH)/caravel/verilog \
 		-e MCW_ROOT=$(MCW_ROOT) \
-		efabless/dv:latest \
-		sh -c $(verify_command)
+	efabless/dv:latest \
+	sh -c $(verify_command)
+
+# Microwatt VHDL to Verilog conversion
+MICROWATT_DIR := $(PWD)/verilog/rtl/microwatt
+MICROWATT_CORE_V := $(PWD)/verilog/rtl/microwatt_core.v
+
+# Docker support for GHDL and Yosys (matching microwatt/Makefile)
+DOCKER ?= 0
+PODMAN ?= 0
+
+ifeq ($(DOCKER), 1)
+DOCKERBIN=docker
+USE_DOCKER=1
+endif
+
+ifeq ($(PODMAN), 1)
+DOCKERBIN=podman
+USE_DOCKER=1
+endif
+
+ifeq ($(USE_DOCKER), 1)
+DOCKERARGS = run --rm -v $(PWD):/src:z -w /src
+DOCKERARGS_MICROWATT = run --rm -v $(PWD):/src:z -w /src/verilog/rtl/microwatt
+GHDL      = $(DOCKERBIN) $(DOCKERARGS) ghdl/ghdl:buster-llvm-7 ghdl
+GHDLSYNTH = -m ghdl
+YOSYS     = $(DOCKERBIN) $(DOCKERARGS) hdlc/ghdl:yosys yosys
+YOSYS_MICROWATT = $(DOCKERBIN) $(DOCKERARGS_MICROWATT) hdlc/ghdl:yosys yosys
+MICROWATT_CD =
+else
+YOSYS ?= yosys
+YOSYS_MICROWATT = $(YOSYS)
+GHDL ?= ghdl
+GHDLSYNTH ?= $(shell ($(YOSYS) -H | grep -q ghdl) || echo -m ghdl)
+MICROWATT_CD = cd verilog/rtl/microwatt &&
+endif
+
+# Core VHDL files from microwatt (must match core_files in microwatt/Makefile)
+MICROWATT_CORE_VHDL := decode_types.vhdl common.vhdl wishbone_types.vhdl fetch1.vhdl \
+	utils.vhdl plrufn.vhdl cache_ram.vhdl icache.vhdl \
+	predecode.vhdl decode1.vhdl helpers.vhdl insn_helpers.vhdl \
+	control.vhdl decode2.vhdl register_file.vhdl \
+	cr_file.vhdl crhelpers.vhdl ppc_fx_insns.vhdl rotator.vhdl \
+	logical.vhdl countbits.vhdl multiply.vhdl multiply-32s.vhdl divider.vhdl \
+	execute1.vhdl loadstore1.vhdl mmu.vhdl dcache.vhdl writeback.vhdl \
+	core_debug.vhdl core.vhdl fpu.vhdl pmu.vhdl bitsort.vhdl \
+	nonrandom.vhdl
+
+# Convert Microwatt VHDL core to Verilog
+$(MICROWATT_CORE_V): $(addprefix $(MICROWATT_DIR)/,$(MICROWATT_CORE_VHDL))
+	@echo "Converting Microwatt VHDL core to Verilog..."
+	@$(MICROWATT_CD) $(YOSYS_MICROWATT) $(GHDLSYNTH) -p "ghdl --std=08 $(MICROWATT_CORE_VHDL) -e core; write_verilog $(notdir $(MICROWATT_CORE_V))"
+	@mv verilog/rtl/microwatt/$(notdir $(MICROWATT_CORE_V)) verilog/rtl/$(notdir $(MICROWATT_CORE_V))
+	@echo "Generated: $(MICROWATT_CORE_V)"
+
+.PHONY: microwatt-core-v
+microwatt-core-v: $(MICROWATT_CORE_V)
 
 .PHONY: harden
 harden: $(blocks)

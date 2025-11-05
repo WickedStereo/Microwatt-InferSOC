@@ -103,18 +103,28 @@ module openframe_project_wrapper (
     input  [`OPENFRAME_IO_PADS-1:0] gpio_loopback_zero
 );
 
-	user_proj_timer mprj (
+	// Internal signals for SoC
+	wire soc_irq;
+	wire user_clock;
+	wire user_reset;
+	
+	// Clock comes from gpio_in[0], reset from gpio_in[1] (active high)
+	assign user_clock = gpio_in[0];
+	assign user_reset = gpio_in[1];
+	
+	microwatt_soc mprj (
 `ifdef USE_POWER_PINS
 		.vccd1(vccd1),
 		.vssd1(vssd1),
 `endif
-        .wb_clk_i(gpio_in[0]),
-        .wb_rst_i(gpio_in[1]),
+        .clk(user_clock),
+        .rst(user_reset),
         .io_in(gpio_in[12:2]),
         .io_out(gpio_out[12:2]),
-        .io_oeb(gpio_oeb[12:2])
+        .io_oeb(gpio_oeb[12:2]),
+        .irq_out(soc_irq)
 
-	    /* NOTE:  Openframe signals not used in picosoc:	*/
+	    /* NOTE:  Openframe signals not used in microwatt_soc:	*/
 	    /* porb_h:    3.3V domain signal			*/
 	    /* resetb_h:  3.3V domain signal			*/
 	    /* gpio_in_h: 3.3V domain signals			*/

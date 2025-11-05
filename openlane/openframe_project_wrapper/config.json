@@ -6,26 +6,26 @@
         "dir::/../../verilog/rtl/openframe_project_wrapper.v"
     ],
     "VERILOG_FILES_BLACKBOX": [
-        "dir::../../verilog/gl/user_proj_timer.v",
+        "dir::../../verilog/gl/microwatt_wrapper.v",
         "dir::../../verilog/gl/vccd1_connection.v",
         "dir::../../verilog/gl/vssd1_connection.v"
     ],
     "EXTRA_LEFS": [
-        "dir::../../lef/user_proj_timer.lef",
+        "dir::../../lef/microwatt_wrapper.lef",
         "dir::../../lef/vccd1_connection.lef",
         "dir::../../lef/vssd1_connection.lef"
     ],
     "EXTRA_GDS_FILES": [
-        "dir::../../gds/user_proj_timer.gds",
+        "dir::../../gds/microwatt_wrapper.gds",
         "dir::../../gds/vccd1_connection.gds",
         "dir::../../gds/vssd1_connection.gds"
     ],
-    "EXTRA_LIBS": "dir::../../lib/user_proj_timer.lib",
+    "EXTRA_LIBS": "dir::../../lib/microwatt_wrapper.lib",
     "EXTRA_SPEFS": [
-        "user_proj_timer",
-        "dir::../../spef/multicorner/user_proj_timer.min.spef",
-        "dir::../../spef/multicorner/user_proj_timer.nom.spef",
-        "dir::../../spef/multicorner/user_proj_timer.max.spef"
+        "microwatt_wrapper",
+        "dir::../../spef/multicorner/microwatt_wrapper.min.spef",
+        "dir::../../spef/multicorner/microwatt_wrapper.nom.spef",
+        "dir::../../spef/multicorner/microwatt_wrapper.max.spef"
     ],
     "MAX_TRANSITION_CONSTRAINT": 0.5,
     "QUIT_ON_SYNTH_CHECKS": 0,

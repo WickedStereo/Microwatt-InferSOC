@@ -1,17 +1,67 @@
-/.idea/
-/precheck_results/
-*/tmp
-*.hex*
+# Generated Verilog from VHDL
+verilog/rtl/microwatt_core.v
+
+# OpenLane run directories
+openlane/*/runs/
+openlane/*/results/
+openlane/*/tmp/
+
+# Build artifacts
+*.o
+*.elf
+*.bin
+*.hex
 *.lst
-*.vcd
-*.gtkw
-/env
-/venv/
-/venv-cocotb/
-/caravel/
-runs/
-/dependencies/
-/mgmt_core_wrapper/
-/logs
-lvs_results/
+firmware/*.o
+firmware/*.elf
+firmware/*.bin
+firmware/*.hex
+firmware/*.lst
+
+# Python virtual environments
+venv/
+venv-cocotb/
 __pycache__/
+*.pyc
+
+# Simulation outputs
+*.vcd
+*.fst
+*.log
+*.out
+*.wlf
+*.vstf
+
+# OpenLane outputs (keep configs, ignore generated files)
+gds/*.gds
+lef/*.lef
+lib/*.lib
+verilog/gl/*.v
+spef/**/*.spef
+sdf/*.sdf
+def/*.def
+signoff/
+
+# Dependencies directory (will be set up on remote VM)
+dependencies/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+*.bak
+
+# Editor directories
+.vscode/
+.idea/
+*.code-workspace
+
+# Mac OS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Caravel/dependencies that will be downloaded
+caravel/
+mgmt_core_wrapper/

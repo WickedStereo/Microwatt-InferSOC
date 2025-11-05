@@ -1,0 +1,56 @@
+{
+    "DESIGN_NAME": "microwatt_wrapper",
+    "DESIGN_IS_CORE": 0,
+    "VERILOG_FILES": [
+        "dir::../../verilog/rtl/microwatt_core.v",
+        "dir::../../verilog/rtl/microwatt_wrapper.v"
+    ],
+    "CLOCK_PERIOD": 100,
+    "CLOCK_PORT": "wb_clk_i",
+    "CLOCK_NET": "wb_clk_i",
+    "FP_SIZING": "absolute",
+    "DIE_AREA": "0 0 2850 3000",
+    "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
+    "MAX_FANOUT_CONSTRAINT": 10,
+    "MAX_TRANSITION_CONSTRAINT": 1.5,
+    "PL_TARGET_DENSITY": 0.35,
+    "PL_RESIZER_SETUP_SLACK_MARGIN": 0.3,
+    "GLB_RESIZER_SETUP_SLACK_MARGIN": 0.15,
+    "GLB_RESIZER_HOLD_SLACK_MARGIN": 0.15,
+    "PL_RESIZER_HOLD_SLACK_MARGIN": 0.3,
+    "SYNTH_STRATEGY": "AREA 0",
+    "SYNTH_NO_FLAT": 1,
+    "SYNTH_BUFFERING": 0,
+    "SYNTH_SIZING": 0,
+    "RUN_HEURISTIC_DIODE_INSERTION": 1,
+    "HEURISTIC_ANTENNA_THRESHOLD": 150,
+    "GRT_REPAIR_ANTENNAS": 1,
+    "VDD_NETS": [
+        "vccd1"
+    ],
+    "GND_NETS": [
+        "vssd1"
+    ],
+    "RUN_CVC": 1,
+    "pdk::sky130*": {
+        "FP_CORE_UTIL": 30,
+        "RT_MAX_LAYER": "met4",
+        "scl::sky130_fd_sc_hd": {
+            "CLOCK_PERIOD": 100
+        },
+        "scl::sky130_fd_sc_hdll": {
+            "CLOCK_PERIOD": 50
+        },
+        "scl::sky130_fd_sc_hs": {
+            "CLOCK_PERIOD": 40
+        },
+        "scl::sky130_fd_sc_ls": {
+            "CLOCK_PERIOD": 100,
+            "SYNTH_MAX_FANOUT": 5
+        },
+        "scl::sky130_fd_sc_ms": {
+            "CLOCK_PERIOD": 80
+        }
+    }
+}
+

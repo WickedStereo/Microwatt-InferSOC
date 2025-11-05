@@ -1,0 +1,55 @@
+{
+    "DESIGN_NAME": "microwatt_soc",
+    "VERILOG_FILES": [
+        "dir::../../verilog/rtl/microwatt_soc.v",
+        "dir::../../verilog/rtl/interconnect/wb_interconnect.v",
+        "dir::../../verilog/rtl/memory/sram_controller.v",
+        "dir::../../verilog/rtl/uart_wb_wrapper.v"
+    ],
+    "VERILOG_FILES_BLACKBOX": [
+        "dir::../../verilog/rtl/microwatt_core.v",
+        "dir::../../verilog/gl/ml_accelerator.v",
+        "dir::../../verilog/rtl/microwatt/uart16550/uart_top.v"
+    ],
+    "EXTRA_LEFS": [
+        "dir::../../lef/ml_accelerator.lef"
+    ],
+    "EXTRA_GDS_FILES": [
+        "dir::../../gds/ml_accelerator.gds"
+    ],
+    "EXTRA_LIBS": [
+        "dir::../../lib/ml_accelerator.lib"
+    ],
+    "CLOCK_PORT": "clk",
+    "CLOCK_PERIOD": 40,
+    "FP_SIZING": "absolute",
+    "DIE_AREA": "0 0 3500 3500",
+    "FP_PDN_VPITCH": 25,
+    "FP_PDN_HPITCH": 25,
+    "FP_PDN_VOFFSET": 5,
+    "FP_PDN_HOFFSET": 5,
+    "DESIGN_IS_CORE": 0,
+    "PL_TARGET_DENSITY": 0.5,
+    "FP_CORE_UTIL": 40,
+    "GRT_ALLOW_CONGESTION": true,
+    "GRT_OVERFLOW_ITERS": 150,
+    "PL_RESIZER_DESIGN_OPTIMIZATIONS": 1,
+    "PL_RESIZER_TIMING_OPTIMIZATIONS": 1,
+    "GLB_RESIZER_TIMING_OPTIMIZATIONS": 1,
+    "RUN_HEURISTIC_DIODE_INSERTION": 1,
+    "DIODE_ON_PORTS": "in",
+    "RT_MAX_LAYER": "met4",
+    "VDD_NETS": ["vccd1"],
+    "GND_NETS": ["vssd1"],
+    "GRT_REPAIR_ANTENNAS": 1,
+    "MACRO_PLACEMENT_CFG": "dir::macro.cfg",
+    "RUN_KLAYOUT_XOR": 0,
+    "RUN_KLAYOUT_DRC": 0,
+    "pdk::sky130*": {
+        "MAX_FANOUT_CONSTRAINT": 6,
+        "scl::sky130_fd_sc_hd": {
+            "CLOCK_PERIOD": 40
+        }
+    }
+}
+
