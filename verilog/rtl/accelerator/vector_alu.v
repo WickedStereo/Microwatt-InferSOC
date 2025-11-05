@@ -82,6 +82,10 @@ module vector_alu #(
     reg signed [ELEM_WIDTH-1:0] scalar_r;
     reg enable_r;
     
+    // Declare temp variables for case statements
+    reg signed [2*ELEM_WIDTH-1:0] mul_tmp;
+    reg signed [2*ELEM_WIDTH-1:0] scale_tmp;
+    
     integer j;
     always @(posedge clk) begin
         if (rst) begin
@@ -111,7 +115,6 @@ module vector_alu #(
                             elem_result[j] = elem_a[j] - elem_b[j];
                         
                         4'b0010: begin // MUL (with saturation)
-                            reg signed [2*ELEM_WIDTH-1:0] mul_tmp;
                             mul_tmp = elem_a[j] * elem_b[j];
                             // Saturate to INT8 range
                             if (mul_tmp > 127)
@@ -132,7 +135,6 @@ module vector_alu #(
                             elem_result[j] = (elem_a[j] < elem_b[j]) ? elem_a[j] : elem_b[j];
                         
                         4'b0110: begin // SCALE (multiply by scalar, shift right 7)
-                            reg signed [2*ELEM_WIDTH-1:0] scale_tmp;
                             scale_tmp = elem_a[j] * scalar_r;
                             // Shift right to maintain Q7 fixed point
                             elem_result[j] = scale_tmp >>> 7;

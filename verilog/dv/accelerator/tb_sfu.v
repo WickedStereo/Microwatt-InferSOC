@@ -24,7 +24,7 @@ module tb_sfu;
     reg [3:0] vec_len;
     reg signed [7:0] data_in;
     reg data_in_valid;
-    wire signed [7:0] data_out;
+    wire signed [31:0] data_out;
     wire data_out_valid;
     wire busy;
     wire done;
@@ -87,34 +87,44 @@ module tb_sfu;
         
         // Test Softmax operation
         $display("\n=== Testing Softmax operation ===");
+        
+        // Setup signals before clock edge
+        @(posedge clk);
+        #1;  // Small delay after clock edge
         operation = 2'b00;  // Softmax
         vec_len = 4'd8;
         start = 1;
+        
         @(posedge clk);
+        #1;
         start = 0;
         
-        // Feed input data
+        // Now feed all data (SFU is now in LOAD_DATA state)
         for (i = 0; i < 8; i = i + 1) begin
             @(posedge clk);
+            #1;
             data_in = test_data[i];
             data_in_valid = 1;
         end
         @(posedge clk);
+        #1;
         data_in_valid = 0;
         
-        // Wait for completion
-        wait(done);
-        $display("Softmax completed");
-        
-        // Collect results
+        // Collect results while waiting for completion
         $display("Softmax results:");
         i = 0;
-        while (i < 8) begin
+        for (integer timeout = 0; timeout < 1000 && !done; timeout = timeout + 1) begin
             @(posedge clk);
-            if (data_out_valid) begin
+            if (data_out_valid && i < 8) begin
                 $display("  Output[%0d] = %d", i, data_out);
                 i = i + 1;
             end
+        end
+        
+        if (done) begin
+            $display("Softmax completed successfully");
+        end else begin
+            $display("ERROR: SFU did not complete");
         end
         
         #100;
@@ -126,34 +136,42 @@ module tb_sfu;
         rst = 0;
         #10;
         
+        @(posedge clk);
+        #1;
         operation = 2'b01;  // LayerNorm
         vec_len = 4'd8;
         start = 1;
+        
         @(posedge clk);
+        #1;
         start = 0;
         
-        // Feed input data
+        // Now feed all data (SFU is now in LOAD_DATA state)
         for (i = 0; i < 8; i = i + 1) begin
             @(posedge clk);
+            #1;
             data_in = test_data[i];
             data_in_valid = 1;
         end
         @(posedge clk);
+        #1;
         data_in_valid = 0;
         
-        // Wait for completion
-        wait(done);
-        $display("LayerNorm completed");
-        
-        // Collect results
+        // Collect results while waiting for completion
         $display("LayerNorm results:");
         i = 0;
-        while (i < 8) begin
+        for (integer timeout = 0; timeout < 1000 && !done; timeout = timeout + 1) begin
             @(posedge clk);
-            if (data_out_valid) begin
+            if (data_out_valid && i < 8) begin
                 $display("  Output[%0d] = %d", i, data_out);
                 i = i + 1;
             end
+        end
+        
+        if (done) begin
+            $display("LayerNorm completed successfully");
+        end else begin
+            $display("ERROR: SFU did not complete");
         end
         
         #100;

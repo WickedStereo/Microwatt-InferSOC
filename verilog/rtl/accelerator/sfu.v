@@ -54,7 +54,7 @@ module sfu #(
     input wire signed [DATA_WIDTH-1:0] data_in,
     input wire data_in_valid,
     
-    output reg signed [DATA_WIDTH-1:0] data_out,
+    output reg signed [ACCUM_WIDTH-1:0] data_out,
     output reg data_out_valid,
     output reg busy,
     output reg done
@@ -137,6 +137,12 @@ module sfu #(
     
     integer i;
     
+    // Declare variables used in case statements at top level
+    reg signed [DATA_WIDTH-1:0] diff;
+    reg [15:0] exp_result;
+    reg signed [ACCUM_WIDTH-1:0] centered;
+    reg signed [ACCUM_WIDTH-1:0] result;
+    
     always @(posedge clk) begin
         if (rst) begin
             state <= IDLE;
@@ -160,9 +166,10 @@ module sfu #(
         end else begin
             case (state)
                 IDLE: begin
-                    done <= 0;
+                    // Clear done only when starting a new operation
                     data_out_valid <= 0;
                     if (start) begin
+                        done <= 0;
                         state <= LOAD_DATA;
                         counter <= 0;
                         vec_len_r <= vec_len;
@@ -201,9 +208,6 @@ module sfu #(
                 COMPUTE_EXP: begin
                     // Compute exp(x - max) for numerical stability
                     if (counter < vec_len_r) begin
-                        reg signed [DATA_WIDTH-1:0] diff;
-                        reg [15:0] exp_result;
-                        
                         diff = data_buf[counter] - max_val;
                         // Clamp negative differences
                         if (diff < 0)
@@ -256,7 +260,6 @@ module sfu #(
                 NORMALIZE: begin
                     // For LayerNorm: compute variance
                     if (counter < vec_len_r) begin
-                        reg signed [ACCUM_WIDTH-1:0] centered;
                         centered = {{24{data_buf[counter][DATA_WIDTH-1]}}, data_buf[counter]} - mean_val;
                         accum_buf[counter] <= centered;
                         variance_val <= variance_val + (centered * centered);
@@ -270,8 +273,6 @@ module sfu #(
                 
                 OUTPUT: begin
                     if (counter < vec_len_r) begin
-                        reg signed [ACCUM_WIDTH-1:0] result;
-                        
                         if (operation_r == 2'b00) begin
                             // Softmax: (exp(x) * recip) >> 8
                             result = (accum_buf[counter] * recip_val) >>> 16;
@@ -280,14 +281,7 @@ module sfu #(
                             result = (accum_buf[counter] * recip_val) >>> 16;
                         end
                         
-                        // Clamp to INT8 range
-                        if (result > 127)
-                            data_out <= 127;
-                        else if (result < -128)
-                            data_out <= -128;
-                        else
-                            data_out <= result[DATA_WIDTH-1:0];
-                        
+                        data_out <= result;
                         data_out_valid <= 1;
                         counter <= counter + 1;
                     end else begin

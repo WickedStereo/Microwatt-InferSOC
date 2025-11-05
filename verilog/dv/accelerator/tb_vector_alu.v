@@ -91,7 +91,7 @@ module tb_vector_alu;
         // Test RELU operation
         $display("\n=== Testing RELU operation ===");
         opcode = 4'b0011;  // RELU
-        vec_a = {8'sd10, 8'sd(-5), 8'sd20, 8'sd(-10), 8'sd30, 8'sd(-1), 8'sd40, 8'sd0};
+        vec_a = {8'sd10, -8'sd5, 8'sd20, -8'sd10, 8'sd30, -8'sd1, 8'sd40, 8'sd0};
         enable = 1;
         
         wait(valid_out);

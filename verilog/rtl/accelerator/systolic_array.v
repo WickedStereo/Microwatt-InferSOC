@@ -61,6 +61,48 @@ module systolic_array #(
     // Vertical partial sum flow (top to bottom)
     wire signed [ARRAY_SIZE-1:0][ARRAY_SIZE:0][ACCUM_WIDTH-1:0] psum_v;
     
+    // Weight buffer to accumulate weights before loading into array
+    reg signed [DATA_WIDTH-1:0] weight_buffer [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0];
+    reg [3:0] load_counter;
+    reg load_trigger;  // Pulse to actually load weights into PEs
+    
+    // Buffer incoming weights and trigger load when complete
+    always @(posedge clk) begin
+        if (rst) begin
+            load_counter <= 0;
+            load_trigger <= 0;
+        end else if (weight_load_en) begin
+            // Store incoming weight row
+            if (load_counter < ARRAY_SIZE) begin
+                for (integer c = 0; c < ARRAY_SIZE; c = c + 1) begin
+                    weight_buffer[load_counter][c] <= weight_data_in[c];
+                end
+                load_counter <= load_counter + 1;
+            end
+            
+            // Trigger load when all rows buffered
+            if (load_counter == ARRAY_SIZE - 1) begin
+                load_trigger <= 1;
+            end else begin
+                load_trigger <= 0;
+            end
+        end else begin
+            load_counter <= 0;
+            load_trigger <= 0;
+        end
+    end
+    
+    // Generate load enable for each PE based on its buffered weight
+    wire [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0] pe_weight_in;
+    genvar r, c;
+    generate
+        for (r = 0; r < ARRAY_SIZE; r = r + 1) begin : gen_pe_weights
+            for (c = 0; c < ARRAY_SIZE; c = c + 1) begin : gen_pe_weights_col
+                assign pe_weight_in[r][c] = weight_buffer[r][c];
+            end
+        end
+    endgenerate
+    
     // Connect inputs to array edges
     genvar row, col;
     generate
@@ -69,8 +111,10 @@ module systolic_array #(
         end
         
         for (col = 0; col < ARRAY_SIZE; col = col + 1) begin : gen_input_cols
-            // Top row gets weights during load, zeros for partial sums
-            assign weight_v[col][0] = weight_load_en ? weight_data_in[col] : 0;
+            // Top row gets weight inputs
+            assign weight_v[col][0] = weight_data_in[col];
+            
+            // Top row starts with zero partial sums
             assign psum_v[col][0] = 0;
             
             // Bottom row outputs
@@ -89,13 +133,14 @@ module systolic_array #(
                     .clk(clk),
                     .rst(rst),
                     .enable(enable),
+                    .weight_load(load_trigger),  // All PEs load when buffer is full
                     
                     // Horizontal activation flow
                     .act_in(act_h[col][row]),
                     .act_out(act_h[col+1][row]),
                     
-                    // Vertical weight flow
-                    .weight_in(weight_v[col][row]),
+                    // Vertical weight flow (use buffered weight during load, normal flow otherwise)
+                    .weight_in(load_trigger ? pe_weight_in[row][col] : weight_v[col][row]),
                     .weight_out(weight_v[col][row+1]),
                     
                     // Vertical partial sum flow

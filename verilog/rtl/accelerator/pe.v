@@ -34,6 +34,7 @@ module pe #(
     input wire clk,
     input wire rst,
     input wire enable,
+    input wire weight_load,  // Signal to load weight into this PE
     
     // Input activation (from left PE)
     input wire signed [DATA_WIDTH-1:0] act_in,
@@ -50,23 +51,35 @@ module pe #(
     output reg signed [ACCUM_WIDTH-1:0] psum_out
 );
 
-    // Internal multiply result
-    reg signed [2*DATA_WIDTH-1:0] mult_result;
+    // Stored weight for weight-stationary operation
+    reg signed [DATA_WIDTH-1:0] weight_stored;
+    
+    // Internal multiply result (combinational)
+    wire signed [2*DATA_WIDTH-1:0] mult_result;
+    assign mult_result = act_in * weight_stored;
     
     always @(posedge clk) begin
         if (rst) begin
             act_out <= 0;
             weight_out <= 0;
+            weight_stored <= 0;
             psum_out <= 0;
-            mult_result <= 0;
-        end else if (enable) begin
-            // Pipeline stage 1: Multiply and pass data
-            mult_result <= act_in * weight_in;
-            act_out <= act_in;
+        end else begin
+            // Always pass weights down (flows top to bottom)
             weight_out <= weight_in;
             
-            // Accumulate partial sum
-            psum_out <= psum_in + mult_result;
+            // Load weight when load signal is pulsed (controlled by array)
+            if (weight_load) begin
+                weight_stored <= weight_in;
+            end
+            
+            // Compute when enabled
+            if (enable) begin
+                act_out <= act_in;
+                psum_out <= psum_in + mult_result;
+            end else begin
+                psum_out <= 0;  // Clear when not computing
+            end
         end
     end
 
