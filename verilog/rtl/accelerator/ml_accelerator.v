@@ -77,9 +77,9 @@ module ml_accelerator #(
     // Systolic array signals
     reg sys_enable;
     reg sys_weight_load;
-    reg [3:0][7:0] sys_act_in;
-    reg [3:0][7:0] sys_weight_in;
-    wire [3:0][31:0] sys_psum_out;
+    reg [31:0] sys_act_in;      // Flattened: 4 x 8-bit
+    reg [31:0] sys_weight_in;   // Flattened: 4 x 8-bit
+    wire [127:0] sys_psum_out;  // Flattened: 4 x 32-bit
     
     // Vector ALU signals
     reg valu_enable;
@@ -205,8 +205,8 @@ module ml_accelerator #(
             sfu_data_in_valid <= 0;
             
             // Update status bits
-            if (sys_psum_out[0] != 0 || sys_psum_out[1] != 0 || 
-                sys_psum_out[2] != 0 || sys_psum_out[3] != 0)
+            if (sys_psum_out[31:0] != 0 || sys_psum_out[63:32] != 0 || 
+                sys_psum_out[95:64] != 0 || sys_psum_out[127:96] != 0)
                 control_reg[CSR_SYS_DONE] <= 1;
             
             if (valu_valid_out)
@@ -230,10 +230,10 @@ module ml_accelerator #(
             
             // Capture systolic array output
             if (control_reg[CSR_SYS_DONE]) begin
-                sys_output_buf[0] <= sys_psum_out[0];
-                sys_output_buf[1] <= sys_psum_out[1];
-                sys_output_buf[2] <= sys_psum_out[2];
-                sys_output_buf[3] <= sys_psum_out[3];
+                sys_output_buf[0] <= sys_psum_out[31:0];
+                sys_output_buf[1] <= sys_psum_out[63:32];
+                sys_output_buf[2] <= sys_psum_out[95:64];
+                sys_output_buf[3] <= sys_psum_out[127:96];
             end
             
             // Generate interrupt
@@ -256,10 +256,10 @@ module ml_accelerator #(
                             if (wb_dat_i[CSR_SYS_START]) begin
                                 sys_enable <= 1;
                                 // Load activations from buffer
-                                sys_act_in[0] <= sys_data_buf[0][7:0];
-                                sys_act_in[1] <= sys_data_buf[1][7:0];
-                                sys_act_in[2] <= sys_data_buf[2][7:0];
-                                sys_act_in[3] <= sys_data_buf[3][7:0];
+                                sys_act_in[7:0] <= sys_data_buf[0][7:0];
+                                sys_act_in[15:8] <= sys_data_buf[1][7:0];
+                                sys_act_in[23:16] <= sys_data_buf[2][7:0];
+                                sys_act_in[31:24] <= sys_data_buf[3][7:0];
                             end
                             if (wb_dat_i[CSR_VALU_START]) begin
                                 valu_enable <= 1;
@@ -284,10 +284,10 @@ module ml_accelerator #(
                             sys_weight_buf[wb_adr_i[5:2] - 6'h14] <= wb_dat_i;
                             // Trigger weight load
                             sys_weight_load <= 1;
-                            sys_weight_in[0] <= wb_dat_i[7:0];
-                            sys_weight_in[1] <= wb_dat_i[15:8];
-                            sys_weight_in[2] <= wb_dat_i[23:16];
-                            sys_weight_in[3] <= wb_dat_i[31:24];
+                            sys_weight_in[7:0] <= wb_dat_i[7:0];
+                            sys_weight_in[15:8] <= wb_dat_i[15:8];
+                            sys_weight_in[23:16] <= wb_dat_i[23:16];
+                            sys_weight_in[31:24] <= wb_dat_i[31:24];
                         end
                         
                         // Vector ALU input A

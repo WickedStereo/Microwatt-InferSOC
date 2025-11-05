@@ -42,14 +42,28 @@ module systolic_array #(
     
     // Weight loading interface
     input wire weight_load_en,
-    input wire [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] weight_data_in,
+    input wire [(ARRAY_SIZE*DATA_WIDTH)-1:0] weight_data_in,
     
     // Activation inputs (one per row)
-    input wire [ARRAY_SIZE-1:0][DATA_WIDTH-1:0] act_data_in,
+    input wire [(ARRAY_SIZE*DATA_WIDTH)-1:0] act_data_in,
     
     // Partial sum outputs (one per column, from bottom row)
-    output wire [ARRAY_SIZE-1:0][ACCUM_WIDTH-1:0] psum_out
+    output wire [(ARRAY_SIZE*ACCUM_WIDTH)-1:0] psum_out
 );
+
+    // Unpack flattened inputs into 2D arrays
+    wire signed [DATA_WIDTH-1:0] weight_in [ARRAY_SIZE-1:0];
+    wire signed [DATA_WIDTH-1:0] act_in [ARRAY_SIZE-1:0];
+    reg signed [ACCUM_WIDTH-1:0] psum_out_arr [ARRAY_SIZE-1:0];
+    
+    genvar unpack_idx;
+    generate
+        for (unpack_idx = 0; unpack_idx < ARRAY_SIZE; unpack_idx = unpack_idx + 1) begin : gen_unpack
+            assign weight_in[unpack_idx] = weight_data_in[unpack_idx*DATA_WIDTH +: DATA_WIDTH];
+            assign act_in[unpack_idx] = act_data_in[unpack_idx*DATA_WIDTH +: DATA_WIDTH];
+            assign psum_out[unpack_idx*ACCUM_WIDTH +: ACCUM_WIDTH] = psum_out_arr[unpack_idx];
+        end
+    endgenerate
 
     // Internal PE interconnections
     // Horizontal activation flow (left to right)
@@ -62,7 +76,7 @@ module systolic_array #(
     wire signed [ARRAY_SIZE-1:0][ARRAY_SIZE:0][ACCUM_WIDTH-1:0] psum_v;
     
     // Weight buffer to accumulate weights before loading into array
-    reg signed [DATA_WIDTH-1:0] weight_buffer [ARRAY_SIZE-1:0][ARRAY_SIZE-1:0];
+    reg signed [DATA_WIDTH-1:0] weight_buffer [0:ARRAY_SIZE-1][0:ARRAY_SIZE-1];
     reg [3:0] load_counter;
     reg load_trigger;  // Pulse to actually load weights into PEs
     
@@ -107,18 +121,20 @@ module systolic_array #(
     genvar row, col;
     generate
         for (row = 0; row < ARRAY_SIZE; row = row + 1) begin : gen_input_rows
-            assign act_h[0][row] = act_data_in[row];
+            assign act_h[0][row] = act_in[row];
         end
         
         for (col = 0; col < ARRAY_SIZE; col = col + 1) begin : gen_input_cols
             // Top row gets weight inputs
-            assign weight_v[col][0] = weight_data_in[col];
+            assign weight_v[col][0] = weight_in[col];
             
             // Top row starts with zero partial sums
             assign psum_v[col][0] = 0;
             
             // Bottom row outputs
-            assign psum_out[col] = psum_v[col][ARRAY_SIZE];
+            always @(*) begin
+                psum_out_arr[col] = psum_v[col][ARRAY_SIZE];
+            end
         end
     endgenerate
     
